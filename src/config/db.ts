@@ -2,6 +2,9 @@ import PG from "pg";
 import "dotenv/config";
 const { Pool } = PG;
 
+
+export const PORT = process.env.PORT || 5001;
+
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL
 });
@@ -22,4 +25,3 @@ export const initializeDatabase = async () => {
   console.log("Database initialized!")
 };
 
-export const PORT = process.env.PORT || 5001;
