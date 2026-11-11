@@ -1,0 +1,7 @@
+Code	      Meaning
+
+23505	      Unique constraint violation
+23502	      Not-null constraint violation
+23503	      Foreign-key constraint violation
+22P02	      Invalid text representation
+42P01	      Undefined table

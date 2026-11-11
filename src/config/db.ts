@@ -22,6 +22,20 @@ export const initializeDatabase = async () => {
     ALTER TABLE users
     ADD COLUMN IF NOT EXISTS password_hash TEXT
   `);
-  console.log("Database initialized!")
-};
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS wallets(
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+  balance_minor BIGINT NOT NULL DEFAULT 0,
+  currency VARCHAR(3) NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT wallets_balance_nonnegative CHECK(balance_minor >= 0),
+  CONSTRAINT wallets_curency_format CHECK(currency ~ '^[A-Z]{3}$'),
+  CONSTRAINT wallets_user_currency_unique UNIQUE(user_id,currency)
+)
+  `);
+  console.log("Database initialized to postgres_learning!")
+};

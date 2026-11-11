@@ -13,3 +13,4 @@ if (result.success) {
   console.log("Validation error")
   console.log(result.error.issues[0]?.message);
 }
+
