@@ -3,6 +3,7 @@ import type {  NextFunction,  Request,  Response} from 'express';
 import AppError from '../utils/AppError.js';
 
 const errorMiddleware = (err: Error, _req: Request, res: Response, next: NextFunction) => {
+  console.error(err);
   if (res.headersSent) {
     return next(err);
   }

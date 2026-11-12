@@ -9,8 +9,13 @@ const createWalletSchema = z.object({
     .transform((value) => value.toUpperCase()),
 });
 
+const walletIdSchema = z.object({
+  walletId: z.string().uuid({ error: "Invalid wallet id" }),
+});
+
 export type InputCreateWallet = z.infer<typeof createWalletSchema>
 
 export {
-  createWalletSchema
+  createWalletSchema,
+ walletIdSchema
 }

@@ -14,7 +14,7 @@ const authMiddleware: RequestHandler = (req, res, next) => {
   };
   try {
     const decode = verifyAccessToken(token);
-    res.locals = { id: decode.sub };
+    res.locals.id = decode.sub;
     next();
   } catch (error) {
     throw new AppError(401, "Invalid or expired Authentication token")

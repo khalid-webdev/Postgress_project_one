@@ -5,3 +5,6 @@ Code	      Meaning
 23503	      Foreign-key constraint violation
 22P02	      Invalid text representation
 42P01	      Undefined table
+
+
+My advice: Give special attention to UUIDs, constraints, parameterized queries, BIGINT, Zod validation, and database transactions. These concepts form the foundation of a reliable fintech backend.
