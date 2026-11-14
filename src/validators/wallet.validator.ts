@@ -17,5 +17,5 @@ export type InputCreateWallet = z.infer<typeof createWalletSchema>
 
 export {
   createWalletSchema,
- walletIdSchema
+  walletIdSchema
 }

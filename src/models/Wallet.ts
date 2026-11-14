@@ -1,3 +1,4 @@
+import type { PoolClient } from "pg";
 import { pool } from "../config/db.js";
 export type Wallet = {
   id: string;
@@ -38,6 +39,22 @@ const getWalletById = async (userId: string, walletId: string): Promise<Wallet |
     LIMIT 1;
   `;
   const result = await pool.query<Wallet>(sql, [userId, walletId]);
+  return result.rows[0] ?? null;
+}
+
+
+
+const updateWalletBalance = async (client:PoolClient,walletId:string,userId:string,amountMinor:string) => {
+  const sql = `
+    UPDATE wallets
+    SET
+      balance_minor= balance_minor + $1,
+      updated_at =CURRENT_TIMESTAMP
+    WHERE id=$2 AND user_id = $3
+    RETURNING *;
+  `;
+  const values = [amountMinor, walletId, userId];
+  const result = await client.query<Wallet>(sql, values);
   return result.rows[0] ?? null;
 }
 

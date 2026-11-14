@@ -47,7 +47,7 @@ export const initializeDatabase = async () => {
       status VARCHAR(20) NOT NULL DEFAULT 'COMPLETED',
       created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 
-      CONSTRAINT transactions_type_check CHECK(type IN ('DIPOSITE','WITHDRAWAL','TRANSFER')),
+      CONSTRAINT transactions_type_check CHECK(type IN ('DIPOSIT','WITHDRAWAL','TRANSFER')),
       CONSTRAINT transactions_amount_nonnegative CHECK(amount_minor > 0),
       CONSTRAINT transactions_status_check CHECK(status IN ('PENDING','COMPLETED','FAILED'))
       )

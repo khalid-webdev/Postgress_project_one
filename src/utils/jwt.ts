@@ -1,8 +1,7 @@
 import jwt from "jsonwebtoken";
 import env from "../config/env.js";
-export type JwtPayload = {
-  userId:string
-}
+
+
 const generateAccessToken = (userId: string): string => {
   return jwt.sign(
     { sub: userId },
