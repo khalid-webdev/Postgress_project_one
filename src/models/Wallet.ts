@@ -1,5 +1,7 @@
+
 import type { PoolClient } from "pg";
 import { pool } from "../config/db.js";
+
 export type Wallet = {
   id: string;
   userId: string;
@@ -42,25 +44,77 @@ const getWalletById = async (userId: string, walletId: string): Promise<Wallet |
   return result.rows[0] ?? null;
 }
 
+type UpdateWalletType = {
+  walletId: string;
+  userId: string;
+  amountMinor: string;
+}
+const updateWalletBalance = async (client:PoolClient,input:UpdateWalletType):Promise<Wallet | null> => {
 
-
-const updateWalletBalance = async (client:PoolClient,walletId:string,userId:string,amountMinor:string) => {
   const sql = `
     UPDATE wallets
     SET
-      balance_minor= balance_minor + $1,
-      updated_at =CURRENT_TIMESTAMP
-    WHERE id=$2 AND user_id = $3
+      balance_minor = balance_minor + $1,
+      updated_at = CURRENT_TIMESTAMP
+    WHERE id=$2 AND user_id =$3
+    RETURNING id,balance_minor;
+  `;
+
+  const values = [
+    input.amountMinor,
+    input.walletId,
+    input.userId
+  ];
+
+
+  const result = await client.query(sql, values);
+
+  const updateWallet = result.rows[0];
+
+  return updateWallet;
+}
+
+const withdrawalWalletBalance = async (client: PoolClient, input: UpdateWalletType):Promise<Wallet | null> => {
+  const sql = `
+    UPDATE wallets
+    SET
+      balance_minor = balance_minor - $1,
+      updated_at = CURRENT_TIMESTAMP
+    WHERE id = $2
+      AND user_id = $3
+      AND balance_minor >= $1
     RETURNING *;
   `;
-  const values = [amountMinor, walletId, userId];
+  const values = [
+    input.amountMinor,
+    input.walletId,
+    input.userId
+  ];
+  const result = await client.query<Wallet>(sql, values);
+
+  const withdrawalWallet = result.rows[0] ?? null;
+  return withdrawalWallet;
+}
+
+//select....for update
+const getWalletForUpdate = async (client: PoolClient, walletId: string, userId: string) => {
+  const sql = `
+    SELECT * FROM wallets
+    WHERE id = $1 AND user_id = $2
+    FOR UPDATE
+  `;
+  const values = [walletId, userId];
   const result = await client.query<Wallet>(sql, values);
   return result.rows[0] ?? null;
 }
 
 
+
 export default {
   createWallet,
   getWalletsByUserId,
-  getWalletById
+  getWalletById,
+  updateWalletBalance,
+  withdrawalWalletBalance,
+  getWalletForUpdate
 };

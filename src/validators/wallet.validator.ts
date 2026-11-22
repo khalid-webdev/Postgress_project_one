@@ -13,9 +13,22 @@ const walletIdSchema = z.object({
   walletId: z.string().uuid({ error: "Invalid wallet id" }),
 });
 
-export type InputCreateWallet = z.infer<typeof createWalletSchema>
+
+const transactionAmountSchema = z.object({
+  amountMinor: z.string()
+    .regex(/^[1-9]\d*$/, "Amount must be a positive initeger")
+    .pipe(
+      z.string().refine((value) => BigInt(value) <= 1000000000000n,
+        "Amount is too large"
+      )
+    ),
+}).strict()
+
+export type InputTransactionAmount = z.infer<typeof transactionAmountSchema>;
+export type InputCreateWallet = z.infer<typeof createWalletSchema>;
 
 export {
   createWalletSchema,
-  walletIdSchema
+  walletIdSchema,
+  transactionAmountSchema
 }
