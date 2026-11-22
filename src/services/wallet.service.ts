@@ -142,10 +142,16 @@ const withdrawFromWallet = async (userId:string,walletId:string,amountMinor:stri
       throw new AppError(409,"This request still being processed")
       // end here
     }
-    const wallet = await Wallet.getWalletById(userId, walletId);
+
+    const wallet =await Wallet.getWalletForUpdate(client, walletId, userId);
+
     if (!wallet) {
       throw new AppError(404, "No wallet found");
     }
+    if (BigInt(wallet.balance_minor) < BigInt(amountMinor)) {
+      throw new AppError(400,"Insufficieant balance")
+    };
+    
     const updatedWallet = await Wallet.withdrawalWalletBalance(client, { amountMinor, userId, walletId });
     if (!updatedWallet) {
       throw new AppError(400,"Insufficient balance")

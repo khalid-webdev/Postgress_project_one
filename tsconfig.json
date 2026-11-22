@@ -24,5 +24,5 @@
     "skipLibCheck": true,
     "noImplicitAny":true
   },
-  "include": ["src"]
+  "include": ["src", "test-race.mjs"]
 }

@@ -8,6 +8,7 @@ export type InputTransaction = {
   walletId: string;
   type: TransactionType;
   amountMinor: string;
+  transferId?: string;
   status?: TransactionStatus;
 }
 export type Transaction = {
@@ -22,9 +23,9 @@ export type Transaction = {
 const createTransaction = async(client:PoolClient,input:InputTransaction):Promise<Transaction> => {
 
   const sql = `
-    INSERT INTO transactions (wallet_id,type,amount_minor,status)
-    VALUES ($1,$2,$3,$4)
-    RETURNING id,wallet_id,type,amount_minor,status
+    INSERT INTO transactions (wallet_id,type,amount_minor,status,transfer_id)
+    VALUES ($1,$2,$3,$4,$5)
+    RETURNING id,wallet_id,type,amount_minor,status,transfer_id
   `;
 
   const values = [
@@ -32,6 +33,7 @@ const createTransaction = async(client:PoolClient,input:InputTransaction):Promis
     input.type,
     input.amountMinor,
     input.status ?? "COMPLETED",
+    input.transferId ?? null
   ];
 
   const result =await client.query<Transaction>(sql, values);
