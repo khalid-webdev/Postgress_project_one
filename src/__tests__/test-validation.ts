@@ -1,4 +1,4 @@
-import { registerSchema } from '../validators/auth.validator.js';
+import { registerSchema } from '../modules/auth/auth.validation.js';
 
 const result = registerSchema.safeParse({
   name: "shaahid",
@@ -13,4 +13,3 @@ if (result.success) {
   console.log("Validation error")
   console.log(result.error.issues[0]?.message);
 }
-

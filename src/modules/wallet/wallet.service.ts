@@ -1,12 +1,14 @@
-import { pool } from "../config/db.js";
-import Idempotency from "../models/Idempotency.js";
-import Transaction from "../models/Transaction.js";
-import type{Transaction as TypeTransaction} from "../models/Transaction.js";
+import { pool } from "../../config/db.js";
+import Idempotency from "../idempotency/idempotency.model.js";
+import Transaction from "../transaction/transaction.model.js";
 
-import Wallet from "../models/Wallet.js"
-import type { Wallet as TypeWallet } from "../models/Wallet.js";
-import AppError from "../utils/AppError.js";
-import { hashIdempotencyKey } from "../utils/hash.idempotency.js";
+
+import Wallet from "../wallet/wallet.model.js"
+import type { Wallet as TypeWallet } from "../wallet/wallet.types.js";
+import type { TypeTransaction } from "../transaction/transaction.types.js";
+import type { TransferWalletInput } from "./wallet.types.js";
+import AppError from "../../utils/AppError.js";
+import { hashIdempotencyKey } from "../../utils/hash.idempotency.js";
 
 type UpdateWalletType = {
   wallet?: TypeWallet;
@@ -151,7 +153,7 @@ const withdrawFromWallet = async (userId:string,walletId:string,amountMinor:stri
     if (BigInt(wallet.balance_minor) < BigInt(amountMinor)) {
       throw new AppError(400,"Insufficieant balance")
     };
-    
+
     const updatedWallet = await Wallet.withdrawalWalletBalance(client, { amountMinor, userId, walletId });
     if (!updatedWallet) {
       throw new AppError(400,"Insufficient balance")
@@ -185,6 +187,32 @@ const withdrawFromWallet = async (userId:string,walletId:string,amountMinor:stri
     client.release();
   }
 }
+
+
+// This is important because a transfer is one of the most sensitive operations in a fintech backend.
+
+const transferWallet = async (input: TransferWalletInput) => {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+
+
+
+
+
+
+
+
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 
 export default {
   createWallet,

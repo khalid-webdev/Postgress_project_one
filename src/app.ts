@@ -1,8 +1,8 @@
 import express from "express";
-import authRoutes from "./routes/auth.routes.js";
+import authRoutes from "./modules/auth/auth.routes.js";
 import errorMiddleware from "./middleware/error.middleware.js";
-import userRoutes from "./routes/user.routes.js";
-import walletRoutes from "./routes/wallet.routes.js";
+import userRoutes from "./modules/user/user.routes.js";
+import walletRoutes from "./modules/wallet/wallet.routes.js";
 
 const app = express();
 

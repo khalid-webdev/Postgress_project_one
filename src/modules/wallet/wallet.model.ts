@@ -1,15 +1,6 @@
-
+import type { Wallet } from "./wallet.types.js";
 import type { PoolClient } from "pg";
-import { pool } from "../config/db.js";
-
-export type Wallet = {
-  id: string;
-  userId: string;
-  currency: string;
-  balance_minor: string; //The pg driver normally returns BIGINT as a string, so we deliberately type it as string.
-  created_at: Date;
-  updated_at?: Date;
-}
+import { pool } from "../../config/db.js";
 
 
 const createWallet = async(userId:string,currency:string):Promise<Wallet | null> => {
@@ -106,6 +97,41 @@ const getWalletForUpdate = async (client: PoolClient, walletId: string, userId: 
   const values = [walletId, userId];
   const result = await client.query<Wallet>(sql, values);
   return result.rows[0] ?? null;
+};
+
+
+//transfer money: creditReceiverWallet
+const creditReceiverWallet = async (client: PoolClient, walletId: string, amountMinor: string): Promise<Wallet | null> => {
+  const sql = `
+    UPDATE wallets
+    SET
+      balance_minor = balance_minor + $1,
+      updated_at = CURRENT_TIMESTAMP
+    WHERE id = $2
+    RETURNING *;
+  `;
+  const values = [amountMinor, walletId];
+  const result = await client.query<Wallet>(sql, values);
+  return result.rows[0] ?? null;
+};
+
+//transfer debit/deduct money we are gonna use the withdraw wallet balance
+
+// for locking we can't use the getWallet for update cause the user_id we don't know the receiver userid
+// for transfer locking
+const getWalletForTransferUpdate = async (client: PoolClient, senderWalletId: string,receiverWalletId:string):Promise<Wallet[]> => {
+  const sql = `
+    SELECT *
+    FROM wallets
+    WHERE id IN ($1,$2)
+    ORDER BY id
+    FOR UPDATE
+  `;
+  const result = await client.query<Wallet>(sql, [senderWalletId,receiverWalletId]);
+  if (result.rows.length ===0) {
+    throw new Error("Zero rows found");
+  }
+  return result.rows;
 }
 
 
@@ -116,5 +142,7 @@ export default {
   getWalletById,
   updateWalletBalance,
   withdrawalWalletBalance,
-  getWalletForUpdate
+  getWalletForUpdate,
+  creditReceiverWallet,
+  getWalletForTransferUpdate
 };

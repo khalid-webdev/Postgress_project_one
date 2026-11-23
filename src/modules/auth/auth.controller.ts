@@ -1,6 +1,6 @@
-import type { LoginInput, RegisterInput } from "../validators/auth.validator.js";
-import authService from "../services/auth.service.js";
-import asyncHandler from "../utils/asyncHandler.js";
+import type { LoginInput, RegisterInput } from "./auth.validation.js";
+import authService from "./auth.service.js";
+import asyncHandler from "../../utils/asyncHandler.js";
 import type { RequestHandler } from "express";
 
 /* --------------------------- register controller -------------------------- */

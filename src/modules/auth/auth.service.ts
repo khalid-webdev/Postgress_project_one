@@ -1,13 +1,10 @@
-import { createUser, findUserByEmail, findUserById } from "../models/User.js";
-import AppError from "../utils/AppError.js";
-import { generateAccessToken } from "../utils/jwt.js";
-import { comparePassword, hashPassword } from "../utils/password.js";
+import { createUser, findUserByEmail, findUserById } from "../user/user.model.js";
+import AppError from "../../utils/AppError.js";
+import { generateAccessToken } from "../../utils/jwt.js";
+import { comparePassword, hashPassword } from "../../utils/password.js";
+import type { RegisterInput } from "./auth.validation.js";
 
-type RegisterInput = {
-  name: string;
-  email: string;
-  password: string;
-}
+
 
 //^* --------------------------- register user --------------------------- */
 const registerUser = async (input:RegisterInput) => {

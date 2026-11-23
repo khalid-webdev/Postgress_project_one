@@ -1,8 +1,9 @@
+
 import type { RequestHandler } from "express";
-import walletService from "../services/wallet.service.js";
-import asyncHandler from "../utils/asyncHandler.js";
-import type { InputTransactionAmount } from "../validators/wallet.validator.js";
-import AppError from "../utils/AppError.js";
+import walletService from "../wallet/wallet.service.js";
+import asyncHandler from "../../utils/asyncHandler.js";
+import type { InputTransactionAmount } from "./wallet.validator.js";
+import AppError from "../../utils/AppError.js";
 
 /* ------------------------ create wallets controller ----------------------- */
 const createWallet = asyncHandler(async (req, res, _next) => {

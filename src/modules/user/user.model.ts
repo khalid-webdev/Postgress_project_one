@@ -1,16 +1,7 @@
-import { pool } from "../config/db.js";
+import { pool } from "../../config/db.js";
+import type { CreateUserInput, User } from "./user.types.js";
 
-type CreateUserInput = {
-  name: string;
-  email: string;
-  passwordHash: string;
-};
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  created_at: Date;
-};
+
 
 // find the user by email
 const findUserByEmail = async (email: string) => {
