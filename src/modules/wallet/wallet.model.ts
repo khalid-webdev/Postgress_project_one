@@ -1,9 +1,9 @@
-import type { Wallet } from "./wallet.types.js";
+import type { InputUpdateWallet, Wallet } from "./wallet.types.js";
 import type { PoolClient } from "pg";
 import { pool } from "../../config/db.js";
 
 
-const createWallet = async(userId:string,currency:string):Promise<Wallet | null> => {
+const createWalletModel = async(userId:string,currency:string):Promise<Wallet | null> => {
   const sql = `
     INSERT INTO wallets(user_id,currency)
     VALUES ($1,$2)
@@ -14,17 +14,17 @@ const createWallet = async(userId:string,currency:string):Promise<Wallet | null>
 }
 
 
-const getWalletsByUserId = async (userId: string): Promise<Wallet[]> => {
+const getWalletsByUserIdModel = async (userId: string): Promise<Wallet[]> => {
   const sql = `
     SELECT id, user_id,currency,balance_minor,created_at, updated_at
     FROM wallets
     WHERE user_id =$1
     `;
   const result = await pool.query<Wallet>(sql, [userId]);
-  return result.rows ?? null;
+  return result.rows;
 };
 
-const getWalletById = async (userId: string, walletId: string): Promise<Wallet | null> => {
+const getWalletByIdModel = async (userId: string, walletId: string): Promise<Wallet | null> => {
   const sql = `
     SELECT id,user_id,currency,balance_minor,created_at,updated_at
     FROM wallets
@@ -35,13 +35,8 @@ const getWalletById = async (userId: string, walletId: string): Promise<Wallet |
   return result.rows[0] ?? null;
 }
 
-type UpdateWalletType = {
-  walletId: string;
-  userId: string;
-  amountMinor: string;
-}
-const updateWalletBalance = async (client:PoolClient,input:UpdateWalletType):Promise<Wallet | null> => {
 
+const updateWalletBalanceModel = async (client:PoolClient,input:InputUpdateWallet):Promise<Wallet | null> => {
   const sql = `
     UPDATE wallets
     SET
@@ -50,22 +45,17 @@ const updateWalletBalance = async (client:PoolClient,input:UpdateWalletType):Pro
     WHERE id=$2 AND user_id =$3
     RETURNING id,balance_minor;
   `;
-
   const values = [
     input.amountMinor,
     input.walletId,
     input.userId
   ];
 
-
   const result = await client.query(sql, values);
-
-  const updateWallet = result.rows[0];
-
-  return updateWallet;
+  return result.rows[0];
 }
 
-const withdrawalWalletBalance = async (client: PoolClient, input: UpdateWalletType):Promise<Wallet | null> => {
+const withdrawalWalletBalanceModel = async (client: PoolClient, input: InputUpdateWallet):Promise<Wallet | null> => {
   const sql = `
     UPDATE wallets
     SET
@@ -88,7 +78,7 @@ const withdrawalWalletBalance = async (client: PoolClient, input: UpdateWalletTy
 }
 
 //select....for update
-const getWalletForUpdate = async (client: PoolClient, walletId: string, userId: string) => {
+const getWalletForUpdateModel = async (client: PoolClient, walletId: string, userId: string) => {
   const sql = `
     SELECT * FROM wallets
     WHERE id = $1 AND user_id = $2
@@ -101,7 +91,7 @@ const getWalletForUpdate = async (client: PoolClient, walletId: string, userId: 
 
 
 //transfer money: creditReceiverWallet
-const creditReceiverWallet = async (client: PoolClient, walletId: string, amountMinor: string): Promise<Wallet | null> => {
+const creditReceiverWalletModel = async (client: PoolClient, walletId: string, amountMinor: string): Promise<Wallet | null> => {
   const sql = `
     UPDATE wallets
     SET
@@ -119,7 +109,7 @@ const creditReceiverWallet = async (client: PoolClient, walletId: string, amount
 
 // for locking we can't use the getWallet for update cause the user_id we don't know the receiver userid
 // for transfer locking
-const getWalletForTransferUpdate = async (client: PoolClient, senderWalletId: string,receiverWalletId:string):Promise<Wallet[]> => {
+const getWalletForTransferUpdateModel = async (client: PoolClient, senderWalletId: string,receiverWalletId:string):Promise<Wallet[]> => {
   const sql = `
     SELECT *
     FROM wallets
@@ -128,21 +118,19 @@ const getWalletForTransferUpdate = async (client: PoolClient, senderWalletId: st
     FOR UPDATE
   `;
   const result = await client.query<Wallet>(sql, [senderWalletId,receiverWalletId]);
-  if (result.rows.length ===0) {
-    throw new Error("Zero rows found");
-  }
+
   return result.rows;
 }
 
 
 
-export default {
-  createWallet,
-  getWalletsByUserId,
-  getWalletById,
-  updateWalletBalance,
-  withdrawalWalletBalance,
-  getWalletForUpdate,
-  creditReceiverWallet,
-  getWalletForTransferUpdate
+export {
+  createWalletModel,
+  getWalletsByUserIdModel,
+  getWalletByIdModel,
+  updateWalletBalanceModel,
+  withdrawalWalletBalanceModel,
+  getWalletForUpdateModel,
+  creditReceiverWalletModel,
+  getWalletForTransferUpdateModel
 };

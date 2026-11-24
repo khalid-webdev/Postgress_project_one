@@ -1,17 +1,29 @@
 import { createHash } from "node:crypto";
 
-interface IdempotencyRequest{
-  operationType: 'DEPOSIT' | 'WITHDRAWAL';
-  walletId: string;
-  amountMinor: string;
-}
-const hashIdempotencyKey = (input: IdempotencyRequest) => {
-  const requestData = JSON.stringify({
+type IdempotencyRequest =
+  | {
+    operationType: 'DEPOSIT' | 'WITHDRAWAL';
+    walletId: string;
+    amountMinor: string;
+  }
+  | {
+    operationType: 'TRANSFER';
+    senderWalletId: string;
+    receiverWalletId: string;
+    amountMinor: string;
+  };
+const hashIdempotencyRequest = (input: IdempotencyRequest):string => {
+  const requestData = input.operationType === "TRANSFER" ? {
     operationType: input.operationType,
-    walletId: input.walletId,
-    amountMinor: input.amountMinor
-  });
-  return createHash('sha256').update(requestData).digest('hex');
+    senderWalletId: input.senderWalletId,
+    receiverWalletId: input.receiverWalletId,
+    amountMinor:input.amountMinor
+  } : {
+      operationType: input.operationType,
+      walletId: input.walletId,
+      amountMinor: input.amountMinor
+  };
+  return createHash('sha256').update(JSON.stringify(requestData)).digest('hex');
 };
 
-export { hashIdempotencyKey };
+export { hashIdempotencyRequest };

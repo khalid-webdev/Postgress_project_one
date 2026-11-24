@@ -1,3 +1,5 @@
+import type { TypeTransaction } from "../transaction/transaction.types.js";
+
 //Database entity
 export interface Wallet {
   id: string;
@@ -8,7 +10,6 @@ export interface Wallet {
   updated_at: Date;
 }
 
-
 //service input
 export interface TransferWalletInput{
   senderWalletId: string;
@@ -16,4 +17,14 @@ export interface TransferWalletInput{
   userId: string;
   amountMinor: string;
   idempotencyKey: string;
+}
+
+export type UpdateWalletType = {
+  wallet?:Wallet;
+  transaction?: TypeTransaction;
+}
+export type InputUpdateWallet = {
+  walletId: string;
+  userId: string;
+  amountMinor: string;
 }

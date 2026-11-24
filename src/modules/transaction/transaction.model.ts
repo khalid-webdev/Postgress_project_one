@@ -30,6 +30,6 @@ const createTransaction = async(client:PoolClient,input:InputTransaction):Promis
 }
 
 
-export default{
+export{
   createTransaction
 }

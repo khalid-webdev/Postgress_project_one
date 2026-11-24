@@ -1,22 +1,6 @@
 import type { PoolClient } from "pg";
+import type { IdempotencyRecord, InputIdempotency } from "./idempotency.types.js";
 
-export type IdempotencyStatus = 'PROCESSING' | 'COMPLETED';
-
-interface IdempotencyRecord{
-  id: string;
-  user_id: string;
-  transaction_id: string | null;
-  idempotency_key: string;
-  hash_request: string;
-  status: IdempotencyStatus;
-  response_body: Record<string, unknown> | null;
-  created_at: Date;
-}
-interface InputIdempotency {
-  userId: string;
-  idempotencyKey: string;
-  hashRequest: string;
-};
 
 
 const createIdempotencyRecord = async (client: PoolClient, input: InputIdempotency):Promise<IdempotencyRecord | null> => {
@@ -24,8 +8,7 @@ const createIdempotencyRecord = async (client: PoolClient, input: InputIdempoten
     INSERT INTO idempotency_keys(user_id,idempotency_key,hash_request)
     VALUES
       ($1,$2,$3)
-    ON CONFLICT (user_id,idempotency_key)
-    DO NOTHING
+    ON CONFLICT (user_id,idempotency_key) DO NOTHING
     RETURNING *;
   `;
 
@@ -51,9 +34,6 @@ const getIdempotencyRecord = async (client: PoolClient, userId: string, idempote
   return result.rows[0] ?? null;
 };
 
-
-
-
 // when either we createIdem  or find the existing record we need to create a record so here is  completed idempotencykeys
 
 const completedIdempotencyRecord = async (
@@ -77,7 +57,7 @@ const completedIdempotencyRecord = async (
 
 
 
-export default {
+export {
   createIdempotencyRecord,
   getIdempotencyRecord,
   completedIdempotencyRecord

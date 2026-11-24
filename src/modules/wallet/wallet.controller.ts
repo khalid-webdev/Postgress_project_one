@@ -1,15 +1,15 @@
 
 import type { RequestHandler } from "express";
-import walletService from "../wallet/wallet.service.js";
 import asyncHandler from "../../utils/asyncHandler.js";
 import type { InputTransactionAmount } from "./wallet.validator.js";
 import AppError from "../../utils/AppError.js";
+import { createWalletService, depositToWalletService, getUserWalletsService, getWalletByIdService, withdrawFromWalletService } from "./wallet.service.js";
 
 /* ------------------------ create wallets controller ----------------------- */
-const createWallet = asyncHandler(async (req, res, _next) => {
+const createWalletController = asyncHandler(async (req, res, _next) => {
   const userId = res.locals.id;
   const { currency } = req.body;
-  const result = await walletService.createWallet(userId, currency);
+  const result = await createWalletService(userId, currency);
 
   return res.status(201).json({
     success: true,
@@ -20,9 +20,9 @@ const createWallet = asyncHandler(async (req, res, _next) => {
 
 
 /* -------------------------- get all users wallets ------------------------- */
-const getUserWallets = asyncHandler(async (_req, res, _next) => {
+const getUserWalletsController = asyncHandler(async (_req, res, _next) => {
   const userId = res.locals.id;
-  const results = await walletService.getUserWallets(userId);
+  const results = await getUserWalletsService(userId);
   return res.status(200).json({
     success: true,
     message: results.length > 0 ? 'Wallets retrieved successfully' : "You haven't created any wallet",
@@ -31,11 +31,11 @@ const getUserWallets = asyncHandler(async (_req, res, _next) => {
 });
 
 /* -------------------------- get wallet by it's id ------------------------- */
-const getWalletById = asyncHandler(async (req, res) => {
+const getWalletByIdController = asyncHandler(async (req, res) => {
   const userId = res.locals.id;
   const walletId = req.params.walletId as string;
 
-  const result = await walletService.getWalletById(userId, walletId);
+  const result = await getWalletByIdService(userId, walletId);
   return res.status(200).json({
     success: true,
     message: "Wallet retrieved successfully!",
@@ -46,7 +46,7 @@ const getWalletById = asyncHandler(async (req, res) => {
 })
 
 /* --------------------------- diposite to wallets -------------------------- */
-const dipositeController: RequestHandler = asyncHandler(async (req, res) => {
+const depositeController: RequestHandler = asyncHandler(async (req, res) => {
   const userId = res.locals.id;
   const walletId = req.params.walletId as string;
   const { amountMinor } = req.body as InputTransactionAmount;
@@ -54,7 +54,7 @@ const dipositeController: RequestHandler = asyncHandler(async (req, res) => {
   if (!idempotencyKey || idempotencyKey.length > 255) {
     throw new AppError(409,"Valid idempotency key header is required")
   }
-  const result = await walletService.dipositToWallet(userId, walletId, amountMinor,idempotencyKey);
+  const result = await depositToWalletService(userId, walletId, amountMinor,idempotencyKey);
 
   return res.status(200).json({
     success: true,
@@ -72,7 +72,7 @@ const withdrawController = asyncHandler(async (req, res) => {
   if (!idempotencyKey || idempotencyKey.length > 255) {
     throw new AppError(400, "A valid Idempotency-Key header is required");
   }
-  const result = await walletService.withdrawFromWallet(userId, walletId,amountMinor,idempotencyKey);
+  const result = await withdrawFromWalletService(userId, walletId,amountMinor,idempotencyKey);
 
   return res.status(200).json({
     success: true,
@@ -80,10 +80,10 @@ const withdrawController = asyncHandler(async (req, res) => {
     data: result
   });
 })
-export default {
-  createWallet,
-  getUserWallets,
-  getWalletById,
-  dipositeController,
+export {
+  createWalletController,
+  getUserWalletsController,
+  getWalletByIdController,
+  depositeController,
   withdrawController
 }

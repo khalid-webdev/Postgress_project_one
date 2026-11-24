@@ -7,7 +7,7 @@ import type { RegisterInput } from "./auth.validation.js";
 
 
 //^* --------------------------- register user --------------------------- */
-const registerUser = async (input:RegisterInput) => {
+const registerUserService = async (input:RegisterInput) => {
   const { name, email, password } = input;
   const existingUser = await findUserByEmail(email);
 
@@ -36,7 +36,7 @@ const registerUser = async (input:RegisterInput) => {
 }
 
 //* ------------------------------- login user ------------------------------- */
-const loginUser = async (email:string,password:string) => {
+const loginUserService = async (email:string,password:string) => {
   const normalizeEmail = email.trim().toLocaleLowerCase();
   const user = await findUserByEmail(normalizeEmail);
   if (!user) {
@@ -59,22 +59,8 @@ const loginUser = async (email:string,password:string) => {
   }
 }
 
-//* ---------------------------- get current user ---------------------------- */
-const getMe = async (userId: string) => {
 
-  const user = await findUserById(userId);
-
-  if (!user) throw new AppError(404, "User not found!");
-
-  return user;
-}
-
-
-
-
-
-export default {
-  registerUser,
-  loginUser,
-  getMe
+export {
+  registerUserService,
+  loginUserService,
 };

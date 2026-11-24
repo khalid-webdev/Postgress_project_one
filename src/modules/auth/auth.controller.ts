@@ -1,12 +1,12 @@
 import type { LoginInput, RegisterInput } from "./auth.validation.js";
-import authService from "./auth.service.js";
 import asyncHandler from "../../utils/asyncHandler.js";
 import type { RequestHandler } from "express";
+import { loginUserService, registerUserService } from "./auth.service.js";
 
 /* --------------------------- register controller -------------------------- */
 const registerController = asyncHandler(async (req, res) => {
   const input = req.body as RegisterInput;
-  const user = await authService.registerUser(input);
+  const user = await registerUserService(input);
   return res.status(201).json({
     success: true,
     message: "User registered successfully",
@@ -15,10 +15,10 @@ const registerController = asyncHandler(async (req, res) => {
 });
 
 /* ---------------------------- login controller ---------------------------- */
-export const loginController: RequestHandler = asyncHandler(async (req, res) => {
+const loginController: RequestHandler = asyncHandler(async (req, res) => {
   const { email, password } = req.body as LoginInput;
 
-  const user = await authService.loginUser(email, password);
+  const user = await loginUserService(email, password);
 
   return res.status(200).json({
     success: true,
@@ -30,20 +30,8 @@ export const loginController: RequestHandler = asyncHandler(async (req, res) => 
   })
 });
 
-/* -------------------------- get the current user -------------------------- */
-const getMe:RequestHandler = asyncHandler(async (req, res) => {
-  const userId = res.locals.id;
-  console.log(typeof userId)
-  const result = await authService.getMe(userId);
-  return res.status(200).json({
-  success: true,
-  data:result
-  })
-});
 
-
-export default {
+export {
   registerController,
-  loginController,
-  getMe
+  loginController
 }

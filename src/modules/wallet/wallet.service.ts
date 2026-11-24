@@ -1,24 +1,17 @@
 import { pool } from "../../config/db.js";
-import Idempotency from "../idempotency/idempotency.model.js";
-import Transaction from "../transaction/transaction.model.js";
-
-
-import Wallet from "../wallet/wallet.model.js"
-import type { Wallet as TypeWallet } from "../wallet/wallet.types.js";
-import type { TypeTransaction } from "../transaction/transaction.types.js";
-import type { TransferWalletInput } from "./wallet.types.js";
+import type { TransferWalletInput, UpdateWalletType } from "./wallet.types.js";
 import AppError from "../../utils/AppError.js";
-import { hashIdempotencyKey } from "../../utils/hash.idempotency.js";
-
-type UpdateWalletType = {
-  wallet?: TypeWallet;
-  transaction?: TypeTransaction;
-}
+import { hashIdempotencyRequest } from "../../utils/hash.idempotency.js";
+import { createWalletModel, getWalletByIdModel, getWalletForUpdateModel, getWalletsByUserIdModel, updateWalletBalanceModel, withdrawalWalletBalanceModel } from "./wallet.model.js";
+import { completedIdempotencyRecord, createIdempotencyRecord, getIdempotencyRecord } from "../idempotency/idempotency.model.js";
+import { createTransaction } from "../transaction/transaction.model.js";
 
 
-const createWallet = async (userId: string, currency: string) => {
+
+
+const createWalletService = async (userId: string, currency: string) => {
   try {
-    const wallet = await Wallet.createWallet(userId, currency);
+    const wallet = await createWalletModel(userId, currency);
     return wallet;
   } catch (error) {
     if (typeof error === "object" && error !== null && 'code' in error && error.code === '23505') {
@@ -28,15 +21,15 @@ const createWallet = async (userId: string, currency: string) => {
   }
 };
 
-const getUserWallets = async (userId: string) => {
-  const wallets = await Wallet.getWalletsByUserId(userId);
+const getUserWalletsService = async (userId: string) => {
+  const wallets = await getWalletsByUserIdModel(userId);
   return wallets;
 }
 
 
-const getWalletById = async (userId: string, walletId: string) => {
+const getWalletByIdService = async (userId: string, walletId: string) => {
 
-  const wallet = await Wallet.getWalletById(userId, walletId);
+  const wallet = await getWalletByIdModel(userId, walletId);
 
   if (!wallet) {
     throw new AppError(404, "Wallet not found!");
@@ -45,25 +38,25 @@ const getWalletById = async (userId: string, walletId: string) => {
 
 }
 
-const dipositToWallet = async (userId: string, walletId: string, amountMinor: string,idempotencyKey:string):Promise<UpdateWalletType> => {
+const depositToWalletService = async (userId: string, walletId: string, amountMinor: string,idempotencyKey:string):Promise<UpdateWalletType> => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
 
-    const hashRequest = hashIdempotencyKey({
+    const hashRequest = hashIdempotencyRequest({
       operationType: "DEPOSIT",
       walletId,
       amountMinor
     });
 
-    const newRecord = await Idempotency.createIdempotencyRecord(client, {
+    const newRecord = await createIdempotencyRecord(client, {
       userId,
       idempotencyKey,
       hashRequest
     });
     if (!newRecord) {
       //existing record
-      const existingRecord = await Idempotency.getIdempotencyRecord(client, userId, idempotencyKey)
+      const existingRecord = await getIdempotencyRecord(client, userId, idempotencyKey)
       if (!existingRecord) {
         throw new AppError(409,"Unable to process request")
       }
@@ -78,16 +71,16 @@ const dipositToWallet = async (userId: string, walletId: string, amountMinor: st
     }
 
 
-    const wallet = await Wallet.getWalletById(userId, walletId);
+    const wallet = await getWalletByIdModel(userId, walletId);
     if (!wallet) {
       throw new AppError(404, "No wallet! wallet not found!");
     }
-    const updateWallet = await Wallet.updateWalletBalance(client, {walletId, userId,amountMinor});
+    const updateWallet = await updateWalletBalanceModel(client, {walletId, userId,amountMinor});
     if (!updateWallet) {
       throw new AppError(400, 'Faled to update the wallet');
     };
 
-    const newTransaction = await Transaction.createTransaction(client, {
+    const newTransaction = await createTransaction(client, {
       walletId,
       type: 'DEPOSIT',
       amountMinor,
@@ -98,7 +91,7 @@ const dipositToWallet = async (userId: string, walletId: string, amountMinor: st
       wallet: updateWallet,
       transaction:newTransaction
     }
-    const completedRecord = await Idempotency.completedIdempotencyRecord(
+    const completedRecord = await completedIdempotencyRecord(
       client, userId, idempotencyKey, newTransaction.id, responseBody
     );
     if (!completedRecord) {
@@ -115,19 +108,19 @@ const dipositToWallet = async (userId: string, walletId: string, amountMinor: st
 
 }
 
-const withdrawFromWallet = async (userId:string,walletId:string,amountMinor:string,idempotencyKey:string):Promise<UpdateWalletType> => {
+const withdrawFromWalletService = async (userId:string,walletId:string,amountMinor:string,idempotencyKey:string):Promise<UpdateWalletType> => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    const hashRequest = hashIdempotencyKey({
+    const hashRequest = hashIdempotencyRequest({
       operationType: "WITHDRAWAL",
       walletId,
       amountMinor
     });
 
-    const newRecord = await Idempotency.createIdempotencyRecord(client, { userId, idempotencyKey, hashRequest });
+    const newRecord = await createIdempotencyRecord(client, { userId, idempotencyKey, hashRequest });
     if (!newRecord) {
-      const existingRecord = await Idempotency.getIdempotencyRecord(client, userId, idempotencyKey);
+      const existingRecord = await getIdempotencyRecord(client, userId, idempotencyKey);
 
       if (!existingRecord) {
         throw new AppError(409,'Unable to process the request')
@@ -145,7 +138,7 @@ const withdrawFromWallet = async (userId:string,walletId:string,amountMinor:stri
       // end here
     }
 
-    const wallet =await Wallet.getWalletForUpdate(client, walletId, userId);
+    const wallet =await getWalletForUpdateModel(client, walletId, userId);
 
     if (!wallet) {
       throw new AppError(404, "No wallet found");
@@ -154,12 +147,12 @@ const withdrawFromWallet = async (userId:string,walletId:string,amountMinor:stri
       throw new AppError(400,"Insufficieant balance")
     };
 
-    const updatedWallet = await Wallet.withdrawalWalletBalance(client, { amountMinor, userId, walletId });
+    const updatedWallet = await withdrawalWalletBalanceModel(client, { amountMinor, userId, walletId });
     if (!updatedWallet) {
       throw new AppError(400,"Insufficient balance")
     };
 
-    const newTransaction = await Transaction.createTransaction(client, {
+    const newTransaction = await createTransaction(client, {
       walletId,
       type: "WITHDRAWAL",
       amountMinor,
@@ -172,7 +165,7 @@ const withdrawFromWallet = async (userId:string,walletId:string,amountMinor:stri
         transaction: newTransaction
     };
     //mark idempotency record as completed
-    const completedRecord = await Idempotency.completedIdempotencyRecord(client, userId, idempotencyKey, newTransaction.id, responseBody);
+    const completedRecord = await completedIdempotencyRecord(client, userId, idempotencyKey, newTransaction.id, responseBody);
     if (!completedRecord) {
       throw new Error("Failed to complete idempotency record")
     };
@@ -191,7 +184,7 @@ const withdrawFromWallet = async (userId:string,walletId:string,amountMinor:stri
 
 // This is important because a transfer is one of the most sensitive operations in a fintech backend.
 
-const transferWallet = async (input: TransferWalletInput) => {
+const transferWalletService = async (input: TransferWalletInput) => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -214,10 +207,11 @@ const transferWallet = async (input: TransferWalletInput) => {
 }
 
 
-export default {
-  createWallet,
-  getUserWallets,
-  getWalletById,
-  dipositToWallet,
-  withdrawFromWallet
+export {
+  createWalletService,
+  getUserWalletsService,
+  getWalletByIdService,
+  depositToWalletService,
+  withdrawFromWalletService,
+  transferWalletService
 }

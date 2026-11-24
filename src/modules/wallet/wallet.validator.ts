@@ -10,7 +10,7 @@ const createWalletSchema = z.object({
 });
 
 const walletIdSchema = z.object({
-  walletId: z.string().uuid({ error: "Invalid wallet id" }),
+  walletId:z.uuid({ error: "Invalid wallet id" }),
 });
 
 
